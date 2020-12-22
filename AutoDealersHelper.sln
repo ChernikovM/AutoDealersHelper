@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30717.126
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoDealersHelper", "AutoDealersHelper.csproj", "{F245BD51-379D-4022-AD23-95CC52EBB417}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F245BD51-379D-4022-AD23-95CC52EBB417}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F245BD51-379D-4022-AD23-95CC52EBB417}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F245BD51-379D-4022-AD23-95CC52EBB417}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F245BD51-379D-4022-AD23-95CC52EBB417}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {4CA056B5-2A03-44AF-8F32-33E69DD2F816}
+	EndGlobalSection
+EndGlobal
