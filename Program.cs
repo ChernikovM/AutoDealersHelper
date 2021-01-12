@@ -18,12 +18,6 @@ namespace AutoDealersHelper
         static void Main(string[] args)
         {
             Start();
-            asd();
-        }
-
-        public static async Task asd()
-        {
-            await Task.Run( () => { int i = 5; });
         }
 
         private static void Start()

@@ -6,8 +6,22 @@ namespace AutoDealersHelper.Database
 {
     public class BotDbContext : DbContext
     {
-        private string _dbPath;
+        public static int BrandsCount { get; private set; }
+        public static int FuelsCount { get; private set; }
+        public static int GearBoxesCount { get; private set; }
+        public static int StatesCount { get; private set; }
 
+        public static void InitStaticFields() //TODO: изменить
+        {
+            using BotDbContext db = new BotDbContext();
+
+            BrandsCount = db.Brands.CountAsync().Result;
+            FuelsCount = db.Fuels.CountAsync().Result;
+            GearBoxesCount = db.GearBoxes.CountAsync().Result;
+            StatesCount = db.States.CountAsync().Result;
+        }
+
+        private string _dbPath;
         public DbSet<Brand> Brands { get; set; }
         public DbSet<Model> Models { get; set; }
         public DbSet<Fuel> Fuels { get; set; }

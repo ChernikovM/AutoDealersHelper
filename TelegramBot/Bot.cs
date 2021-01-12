@@ -1,6 +1,7 @@
 ﻿using AutoDealersHelper.Database;
 using AutoDealersHelper.Parsers;
 using AutoDealersHelper.TelegramBot.Commands;
+using AutoDealersHelper.TelegramBot.Setters;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,13 +11,13 @@ using Telegram.Bot.Args;
 using Telegram.Bot.Types;
 
 //TODO: при старте бота сохранить в кеш все таблицы из бд для быстрого обращения
-//TODO: добавить в текст эмодзи
 
 namespace AutoDealersHelper.TelegramBot
 {
     public sealed class Bot
     {
         #region Singleton
+
         private static Bot _bot;
         private Bot(Config config, NLog.Logger logger)
         {
@@ -24,10 +25,13 @@ namespace AutoDealersHelper.TelegramBot
             this.logger = logger;
             _autoRiaParser = ParserAutoRia.GetInstance(config.AutoRiaToken, logger);
 
+            BotDbContext.InitStaticFields();
+
             Client.OnMessage += ClientOnMessageReceived;
-            Client.OnCallbackQuery += ClientOnCallbackQueryReceived;
             
             CommandsInit();
+            SettersInit();
+            _messageHandler = new MessageHandler(_commands, _setters, Client);
         }
 
         public static Bot GetInstance(Config config, NLog.Logger logger)
@@ -41,15 +45,18 @@ namespace AutoDealersHelper.TelegramBot
 
         private ParserAutoRia _autoRiaParser;
 
-        public BotDbContext db;
+        public BotDbContext db { get; } //TODO: remove this field
 
-        public  NLog.Logger logger;
+        public  NLog.Logger logger; //TODO: make private readonly
 
-        private List<ICommand> _commands;
-
+        private List<AbstractCommand> _commands;
+        private List<ISetter> _setters;
+        private readonly MessageHandler _messageHandler;
+        /*
         public IReadOnlyDictionary<string, ICommand> CommandsDict { get => _commandsDict; }
 
         private Dictionary<string, ICommand> _commandsDict;
+        */
 
         public TelegramBotClient Client { get; private set; }
 
@@ -66,99 +73,64 @@ namespace AutoDealersHelper.TelegramBot
 
         private void CommandsInit() //TODO: тут добалвяются все команды
         {
-            _commands = new List<ICommand>();
-            _commandsDict = new Dictionary<string, ICommand>();
-
+            _commands = new List<AbstractCommand>();
+            
             _commands.Add(new StartCommand());
             _commands.Add(new MenuCommand());
-            _commands.Add(new SettingsCommand());
+            _commands.Add(new FilterSettingCommand());
             _commands.Add(new SetBrandCommand());
             _commands.Add(new SetModelCommand());
-            _commands.Add(new CarSearchCommand());
+            _commands.Add(new CarSearchMenuCommand());
+            //_commands.Add(new BackToFilterSettingCommand());
+            //_commands.Add(new BackToMainMenuCommand());
+            //_commands.Add(new BackToCarSearchMenuCommand());
+            _commands.Add(new NotImplementedCommand());
+        }
 
-            foreach (var com in _commands)
-            {
-                _commandsDict.Add(com.Name, com);
-            }
+        private void SettersInit()
+        {
+            _setters = new List<ISetter>();
+
+            _setters.Add(new SetBrands());
+            _setters.Add(new SetModels());
+            
         }
 
         private async void ClientOnMessageReceived(object sender, MessageEventArgs e)
         {
-            if (e.Message.Type != Telegram.Bot.Types.Enums.MessageType.Text)//TODO: кинуть обратно сообщение (КАК ЖАЛЬ, ЧТО Я НЕ УМЕЮ ЧИТАТЬ ТАКИЕ СООБЩЕНИЯ.....)
-            {
-                logger.Warn($"Non-text message received from chatId:{e.Message.Chat.Id}");
-                return;
-            }
-
-            logger.Info($"Message: \"{e.Message.Text}\" FROM ChatID: {e.Message.Chat.Id}");
-
-            if (String.Equals(e.Message.Text, "/start"))
-            {
-                await CommandsDict[e.Message.Text].Execute(e.Message, _bot);
-                return;
-            }
-
-            using (var db = new BotDbContext()) //TODO: убрать этот костыль в релизе
-            {
-                if (db.Users.Any(x => x.ChatId == e.Message.Chat.Id) == false)
-                    return;
-            }
-
-            ChatStates chatState;
-            using (db = new BotDbContext())
-            {
-                Enum.TryParse(db.Users.First(x => x.ChatId == e.Message.Chat.Id).ChatStateId, out chatState);
-            }
-
-            await ChatStateHandler(e.Message, chatState); //TODO: отловить эксепшн и обработать его
-        }
-
-        private async Task ChatStateHandler(Message mes, ChatStates chatState)
-        {
-            ICommand currentCommand;
             try
             {
-                currentCommand = CommandsDict[mes.Text];
+                logger.Info($"Message: \"{e.Message.Text}\" FROM ChatID: {e.Message.Chat.Id}");
 
-                if (chatState == currentCommand.RequiredStateForRun)
-                    await currentCommand.Execute(mes, _bot);
+                await _messageHandler.Process(e.Message);
+            }
+            catch (ArgumentException ex)
+            {
+                await CommandHelper.SendErrorMessage(null, e.Message.Chat.Id, "Известная ошибка", Client);
+                logger.Error(ex);
             }
             catch (Exception ex)
             {
-                logger.Warn(ex); //TODO: передать дальше эксепшн
-                return;
-            }
-        }
-
-        private async void ClientOnCallbackQueryReceived(object sender, CallbackQueryEventArgs e)
-        {
-            logger.Info($"CallbackQuery: \"{e.CallbackQuery.Data}\" FROM ChatID: {e.CallbackQuery.Message.Chat.Id}");
-
-            foreach (ICommand command in _commands)
-            {
-                if (e.CallbackQuery.Data == command.Name)
-                {
-                    await command.Execute(e.CallbackQuery.Message, _bot);
-                    break;
-                }
+                await CommandHelper.SendErrorMessage(null, e.Message.Chat.Id, "Незвестная ошибка", Client);
+                logger.Fatal(ex);
             }
         }
 
         #region FormattedSenders
 
-        public async Task SendTextFormattedCode(long chatId, string text)
+        public static async Task<Message> SendTextFormattedCode(long chatId, string text, TelegramBotClient client)
         {
-            await this.Client.SendTextMessageAsync(chatId, $"<code>{text}</code>", parseMode: Telegram.Bot.Types.Enums.ParseMode.Html);
+            return await client.SendTextMessageAsync(chatId, $"<code>{text}</code>", parseMode: Telegram.Bot.Types.Enums.ParseMode.Html);
         }
 
-        public async Task SendTextFormattedBold(long chatId, string text)
+        public static async Task<Message> SendTextFormattedBold(long chatId, string text, TelegramBotClient client)
         {
-            await this.Client.SendTextMessageAsync(chatId, $"<b>{text}</b>", parseMode: Telegram.Bot.Types.Enums.ParseMode.Html);
+            return await client.SendTextMessageAsync(chatId, $"<b>{text}</b>", parseMode: Telegram.Bot.Types.Enums.ParseMode.Html);
         }
 
-        public async Task SendTextFormattedItalic(long chatId, string text)
+        public static async Task<Message> SendTextFormattedItalic(long chatId, string text, TelegramBotClient client)
         {
-            await this.Client.SendTextMessageAsync(chatId, $"<i>{text}</i>", parseMode: Telegram.Bot.Types.Enums.ParseMode.Html);
+            return await client.SendTextMessageAsync(chatId, $"<i>{text}</i>", parseMode: Telegram.Bot.Types.Enums.ParseMode.Html);
         }
         #endregion
     }

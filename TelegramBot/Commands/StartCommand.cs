@@ -1,37 +1,26 @@
-﻿using System;
+﻿//TODO: изменить екзекют : написать приветствие и как пользоваться ботом
+
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
+using Telegram.Bot;
 using Telegram.Bot.Types;
 
 namespace AutoDealersHelper.TelegramBot.Commands
 {
-    class StartCommand : ICommand
+    public class StartCommand : AbstractCommand
     {
-        public string Name { get; } = "/start";
+        public override string Name => CommandName(CommandNameId.C_START);
 
-        public string Description { get; } = "Начать работу с ботом";
+        public override ChatStates RequiredStateForRun => ChatStates.S_ANY;
 
-        public ChatStates RequiredStateForRun { get; } = ChatStates.S_START;
+        public override ChatStates CurrentState => ChatStates.S_START;
 
-        public async Task Execute(Message mes, Bot bot) //TODO: изменить екзекют : написать приветствие и как пользоваться ботом
+        public override AbstractCommand PreviousCommand => null;
+        public override Dictionary<string, AbstractCommand> AvailableCommands => null;
+
+        protected override async Task<Message> Action(Database.Objects.User user, TelegramBotClient client)
         {
-            using (bot.db = new Database.BotDbContext())
-            {
-                if (bot.db.Users.Any(x => x.ChatId == mes.Chat.Id) == false) //TODO: тут создаются карточки пользователей
-                {
-                    bot.db.Users.Add(new Database.Objects.User()
-                    {
-                        ChatId = mes.Chat.Id,
-                        ChatStateId = ChatStates.S_START.ToString(),
-                    });
-                    await bot.db.SaveChangesAsync();
-                }
-            }
-
-            MenuCommand com = new MenuCommand();
-            await com.Execute(mes, bot);
+            return await new MenuCommand().Run(user, client); //TODO: запихнуть в коммандХелпер словарь со всеми командами из Бот.сиэс
         }
     }
 }

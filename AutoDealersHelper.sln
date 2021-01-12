@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30717.126
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoDealersHelper", "AutoDealersHelper.csproj", "{F245BD51-379D-4022-AD23-95CC52EBB417}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AutoDealersHelper", "AutoDealersHelper.csproj", "{F245BD51-379D-4022-AD23-95CC52EBB417}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

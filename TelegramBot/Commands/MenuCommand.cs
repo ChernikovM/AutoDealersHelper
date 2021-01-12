@@ -1,38 +1,27 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
+using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.ReplyMarkups;
 
 namespace AutoDealersHelper.TelegramBot.Commands
 {
-    class MenuCommand : ICommand
+    class MenuCommand : AbstractCommand, ICommandWithKeyboard
     {
-        public string Name { get; } = "Главное меню";
-
-        public string Description { get; } = "Главное меню";
-
-        public ChatStates RequiredStateForRun { get; } = ChatStates.S_START;
-
-        public async Task Execute(Message mes, Bot bot)
+        public override string Name => CommandName(CommandNameId.C_MAIN_MENU);
+        public override ChatStates CurrentState => ChatStates.S_MAIN_MENU;
+        public override ChatStates RequiredStateForRun => ChatStates.S_START;
+        public override AbstractCommand PreviousCommand => null;
+        public override Dictionary<string, AbstractCommand> AvailableCommands => new Dictionary<string, AbstractCommand>()
         {
-            await this.ChangeChatState(mes.Chat.Id, ChatStates.S_MENU);
+            { CommandName(CommandNameId.C_CAR_SEARCH_MENU), new CarSearchMenuCommand() },
+        };
 
-            List<List<KeyboardButton>> rows = new List<List<KeyboardButton>>();
-            rows.Add(new List<KeyboardButton>()
-            {
-                new KeyboardButton("Поиск авто"),
-                new KeyboardButton("Пустая кнопка")
-            });
-            rows.Add(new List<KeyboardButton>()
-            { 
-                new KeyboardButton("Пустая кнопка")
-            });
+        public ReplyKeyboardMarkup Keyboard => (this as ICommandWithKeyboard).GetKeyboard(AvailableCommands, PreviousCommand, 2);
 
-            var keyboard = new ReplyKeyboardMarkup(rows, resizeKeyboard: true);
-
-            await bot.Client.SendTextMessageAsync(mes.Chat.Id, Name, replyMarkup: keyboard);
+        protected override async Task<Message> Action(Database.Objects.User user, TelegramBotClient client)
+        {
+            return await client.SendTextMessageAsync(user.ChatId, Name, replyMarkup: Keyboard);
         }
     }
 }

@@ -1,45 +1,38 @@
-﻿using AutoDealersHelper.Database.Objects;
+﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
+using Telegram.Bot;
 using Telegram.Bot.Types;
+using Telegram.Bot.Types.ReplyMarkups;
 
 namespace AutoDealersHelper.TelegramBot.Commands
 {
-    class SetModelCommand : ICommand
+    class SetModelCommand : AbstractCommand, ICommandWithKeyboard, ICommandValidatable
     {
-        public string Name { get; } = "Модель";
+        public override string Name => this.CommandName(CommandNameId.C_MODEL);
+        public override ChatStates RequiredStateForRun => ChatStates.S_SETTING_FILTER_MENU;
+        public override ChatStates CurrentState => ChatStates.S_SET_MODEL;
+        public override AbstractCommand PreviousCommand => new FilterSettingCommand();
+        public override Dictionary<string, AbstractCommand> AvailableCommands => null;
 
-        public string Description { get; } = "Выбрать модель авто";
+        public ReplyKeyboardMarkup Keyboard => (this as ICommandWithKeyboard).GetKeyboard(AvailableCommands, PreviousCommand);
 
-        public ChatStates RequiredStateForRun { get; } = ChatStates.S_SETTING;
-
-        public async Task Execute(Message mes, Bot bot)
+        protected override async Task<Message> Action(Database.Objects.User user, TelegramBotClient client)
         {
-            await this.ChangeChatState(mes.Chat.Id, ChatStates.S_SET_MODEL);
-            await this.SendBackButton(bot, mes.Chat.Id);
-            try //TODO: 1) сделать общий метод public Execute безопасным (try/catch), а в нем вызывать private Run
-            {
-                using (bot.db = new Database.BotDbContext())
-                {
-                    var userBrand = bot.db.Users.First(x => x.ChatId == mes.Chat.Id).Brand; //сделать десериализацию бренда в список при обращении
-                    if (userBrand == null)
-                    {
-                        await this.SendErrorMessage(bot, mes.Chat.Id, "Не выбрана марка автомобиля");
-                        return;
-                    }
-                }
+            await client.SendTextMessageAsync(user.ChatId, Name, replyMarkup: Keyboard);
+            //тут получаем список брендов авто, генерируем список моделей и отправляем ответ
+            return await this.SendExplanationString(user.ChatId, client);
+        }
 
-                await this.SendExplanationString(bot, mes.Chat.Id);
-            }
-            catch (Exception ex) //TODO: доработать текст респонса
-            {
-                //TODO: обработать все екзекьюты подобной констуркией
-                bot.logger.Error(ex);
-                await this.SendErrorMessage(bot, mes.Chat.Id, "Произошла непредвиденная ошибка, пожалуйста обратитесь в службу поддержки.");
-            }
+        public bool Validate(Database.Objects.User user)
+        {
+            List<int> brands = JsonConvert.DeserializeObject(user.Brand, typeof(List<int>)) as List<int>;
+
+            if (brands.Count == 0 || brands[0] == 0)
+                throw new ArgumentException(); //TODO: BrandException
+
+             return true;
         }
     }
 }
