@@ -27,7 +27,7 @@ namespace AutoDealersHelper.TelegramBot.Commands
             {
                 await this.SendCollectionAsList<Brand>(user.ChatId, db.Brands, client);
             }
-            return await this.SendExplanationString(user.ChatId, client);
+            return await this.SendExplanationStringForDbSet(user.ChatId, client);
         }
     }
 }

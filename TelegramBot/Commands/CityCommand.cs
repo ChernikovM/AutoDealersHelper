@@ -37,7 +37,7 @@ namespace AutoDealersHelper.TelegramBot.Commands
         {
             await client.SendTextMessageAsync(user.ChatId, Name, replyMarkup: Keyboard);
             //тут получаем список областей, генерируем список городов и отправляем ответ
-            return await this.SendExplanationString(user.ChatId, client);
+            return await this.SendExplanationStringForDbSet(user.ChatId, client);
         }
     }
 }

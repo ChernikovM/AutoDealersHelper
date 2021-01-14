@@ -16,20 +16,20 @@ namespace AutoDealersHelper.TelegramBot
 {
     public class MessageHandler
     {
-        private Dictionary<string, AbstractCommand> _command;
-        private Dictionary<ChatStates, ISetter> _setter;
-        private TelegramBotClient _client;
+        private readonly Dictionary<string, AbstractCommand> _command;
+        private readonly Dictionary<ChatStates, AbstractSetter> _setter;
+        private readonly TelegramBotClient _client;
 
-        public MessageHandler(List<AbstractCommand> commands, List<ISetter> setters, TelegramBotClient client)
+        public MessageHandler(List<AbstractCommand> commands, List<AbstractSetter> setters, TelegramBotClient client)
         {
             _command = new Dictionary<string, AbstractCommand>();
-            _setter = new Dictionary<ChatStates, ISetter>();
+            _setter = new Dictionary<ChatStates, AbstractSetter>();
 
             foreach (var com in commands)
                 _command.Add(com.Name, com);
 
             foreach (var setter in setters)
-                _setter.Add(setter.RequiredState, setter);
+                _setter.Add(setter.RequiredStateForRun, setter);
 
             _client = client;
         }
@@ -85,9 +85,9 @@ namespace AutoDealersHelper.TelegramBot
             if (message.Text == CommandHelper.commandNames[CommandNameId.C_BACK])
                 return await BackButtonRun(user, chatState);
 
-            AbstractCommand com;
+            AbstractCommand currentCommand;
 
-            if (_command.TryGetValue(message.Text, out com) == false)
+            if (_command.TryGetValue(message.Text, out currentCommand) == false)
             {
                 if (chatState >= ChatStates.S_SETTER_FIRST
                     && chatState <= ChatStates.S_SETTER_LAST)
@@ -95,26 +95,26 @@ namespace AutoDealersHelper.TelegramBot
                     return await SetterHandler(user, chatState, message);
                 }
 
-                return null;                
+                return null; //команда не найдена и это не сеттер
             }
 
-            if (IsCommandCanBeExecuted(com, chatState) == false)
+            if (IsCommandCanBeExecuted(currentCommand, chatState) == false)
                 return null;
 
-            if (com is ICommandValidatable)
-                (com as ICommandValidatable).Validate(user);            
+            if (currentCommand is ICommandValidatable)
+                (currentCommand as ICommandValidatable).Validate(user);            
 
-            return await com.Run(user, _client);
+            return await currentCommand.Run(user, _client);
         }
 
         private async Task<Message> SetterHandler(Database.Objects.User user, ChatStates userChatState, Message message)
         {
-            if (_setter.TryGetValue(userChatState, out ISetter setter) == false)
+            if (_setter.TryGetValue(userChatState, out AbstractSetter setter) == false)
             {
                 throw new ArgumentException(); //TODO:  UnknownSetterException
             }
 
-            return await setter.Run(user, message.Text, _client);            
+            return await setter.Run(user, message.Text, _client);
         }
 
         private bool IsCommandCanBeExecuted(AbstractCommand com, ChatStates userChatState)

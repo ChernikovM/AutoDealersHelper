@@ -5,6 +5,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace AutoDealersHelper.Database.Objects
@@ -27,7 +28,8 @@ namespace AutoDealersHelper.Database.Objects
             set
             {
                 using BotDbContext db = new BotDbContext();
-                db.Users.FirstAsync(x => x.ChatId == ChatId).Result.FilterString = JsonConvert.SerializeObject(value);
+                this.FilterString = JsonConvert.SerializeObject(value);
+                db.Users.FirstAsync(x => x.ChatId == ChatId).Result.FilterString = this.FilterString;
                 db.SaveChangesAsync();
             }
         }
@@ -59,6 +61,18 @@ namespace AutoDealersHelper.Database.Objects
         public User()
         { 
         
+        }
+
+        public User Update()
+        {
+            using var db = new BotDbContext();
+
+            var user = db.Users.First(x => x.ChatId == this.ChatId);
+            user = this;
+
+            db.SaveChanges();
+
+            return this;
         }
     }
 }

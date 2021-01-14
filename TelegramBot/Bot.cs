@@ -22,9 +22,7 @@ namespace AutoDealersHelper.TelegramBot
         {
             Client = new TelegramBotClient(config.TelegramToken);
             this.logger = logger;
-            _autoRiaParser = ParserAutoRia.GetInstance(config.AutoRiaToken, logger);
-
-            BotDbContext.InitStaticFields();
+            _autoRiaParser = ParserAutoRia.GetInstance(config.AutoRiaToken, logger);            
 
             Client.OnMessage += ClientOnMessageReceived;
             
@@ -42,12 +40,12 @@ namespace AutoDealersHelper.TelegramBot
         }
         #endregion
 
-        private ParserAutoRia _autoRiaParser;
+        private readonly ParserAutoRia _autoRiaParser;
 
         private readonly NLog.Logger logger;
 
         private List<AbstractCommand> _commands;
-        private List<ISetter> _setters;
+        private List<AbstractSetter> _setters;
         private readonly MessageHandler _messageHandler;
 
         public TelegramBotClient Client { get; private set; }
@@ -65,33 +63,36 @@ namespace AutoDealersHelper.TelegramBot
 
         private void CommandsInit() //TODO: тут добалвяются все команды
         {
-            _commands = new List<AbstractCommand>();
-            
-            _commands.Add(new StartCommand());
-            _commands.Add(new MenuCommand());
-            _commands.Add(new FilterSettingCommand());
-            _commands.Add(new BrandCommand());
-            _commands.Add(new ModelCommand());
-            _commands.Add(new CarSearchMenuCommand());
-            _commands.Add(new StateCommand());
-            _commands.Add(new CityCommand());
-            _commands.Add(new FuelCommand());
-            _commands.Add(new GearBoxCommand());
-            _commands.Add(new PriceCommand());
-            _commands.Add(new MileageCommand());
-            _commands.Add(new YearCommand());
-            _commands.Add(new VolumeCommand());
-            _commands.Add(new ResetFilterCommand());
-            _commands.Add(new NotImplementedCommand());
+            _commands = new List<AbstractCommand>
+            {
+                new StartCommand(),
+                new MenuCommand(),
+                new FilterSettingCommand(),
+                new BrandCommand(),
+                new ModelCommand(),
+                new CarSearchMenuCommand(),
+                new StateCommand(),
+                new CityCommand(),
+                new FuelCommand(),
+                new GearBoxCommand(),
+                new PriceCommand(),
+                new MileageCommand(),
+                new YearCommand(),
+                new VolumeCommand(),
+                new ResetFilterCommand(),
+                new NotImplementedCommand()
+            };
         }
 
         private void SettersInit()
         {
-            _setters = new List<ISetter>();
+            _setters = new List<AbstractSetter>
+            {
+                new BrandsSetter(),
+                new MileageSetter(),
+                new ModelsSetter(),
+            };
 
-            _setters.Add(new SetBrands());
-            _setters.Add(new SetModels());
-            
         }
 
         private async void ClientOnMessageReceived(object sender, MessageEventArgs e)

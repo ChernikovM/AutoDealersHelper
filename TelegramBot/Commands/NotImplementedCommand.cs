@@ -21,7 +21,7 @@ namespace AutoDealersHelper.TelegramBot.Commands
             //return await this.SendErrorMessage(user.ChatId, "Такой команды не существует или она находится в разработке.\n\nПопробуйте другой пункт меню.", client)            
         }
 
-        protected override async Task<Message> Action(Database.Objects.User user, TelegramBotClient client)
+        protected override Task<Message> Action(Database.Objects.User user, TelegramBotClient client)
         {
             throw new NotImplementedException();
         }

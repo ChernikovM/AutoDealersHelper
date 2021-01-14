@@ -16,7 +16,7 @@ namespace AutoDealersHelper.Database.Objects
         public List<BaseType> Fuels { get; set; }
 
         public List<int> Price { get; set; }
-        public List<int> Volume { get; set; }
+        public List<double> Volume { get; set; }
         public List<int> Mileage { get; set; }
         public List<int> Year { get; set; }
 
@@ -30,7 +30,7 @@ namespace AutoDealersHelper.Database.Objects
             Fuels = new List<BaseType>() { new BaseType() };
 
             Price = new List<int>() { 0 };
-            Volume = new List<int>() { 0 };
+            Volume = new List<double>() { 0 };
             Mileage = new List<int>() { 0 };
             Year = new List<int>() { 0 };
         }
@@ -58,17 +58,23 @@ namespace AutoDealersHelper.Database.Objects
             if (collection.Count == 1 && collection[0].Number == 0)
                 return "Любой\n";
 
+            bool first = true;
             StringBuilder sb = new StringBuilder();
             foreach (var n in collection)
             {
-                sb.Append(n.Name + ", ");
-                sb.Append(Environment.NewLine);
+                if (first)
+                    first = false;
+                else
+                    sb.Append(", ");
+
+                sb.Append(n.Name);
             }
+            sb.Append(Environment.NewLine);
 
             return sb.ToString();
         }
 
-        private string GetValuePairAsString(List<int> pair)
+        private string GetValuePairAsString<T>(List<T> pair)
         {
             if (pair.Count == 1)
                 return "Любой\n";

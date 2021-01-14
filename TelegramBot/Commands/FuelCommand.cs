@@ -32,7 +32,7 @@ namespace AutoDealersHelper.TelegramBot.Commands
             {
                 await this.SendCollectionAsList<Fuel>(user.ChatId, db.Fuels, client);
             }
-            return await this.SendExplanationString(user.ChatId, client);
+            return await this.SendExplanationStringForDbSet(user.ChatId, client);
         }
     }
 }

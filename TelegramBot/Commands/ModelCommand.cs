@@ -1,7 +1,8 @@
-﻿using AutoDealersHelper.Exceptions;
-using Newtonsoft.Json;
-using System;
+﻿using AutoDealersHelper.Database;
+using AutoDealersHelper.Database.Objects;
+using AutoDealersHelper.Exceptions;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
@@ -22,8 +23,17 @@ namespace AutoDealersHelper.TelegramBot.Commands
         protected override async Task<Message> Action(Database.Objects.User user, TelegramBotClient client)
         {
             await client.SendTextMessageAsync(user.ChatId, Name, replyMarkup: Keyboard);
-            //тут получаем список брендов авто, генерируем список моделей и отправляем ответ
-            return await this.SendExplanationString(user.ChatId, client);
+
+            List<BaseType> brands = user.Filter.Brands;
+            List<Model> modelsDbSet = new List<Model>();
+            using (var db = new BotDbContext())
+            {
+                foreach (var n in brands)
+                    modelsDbSet.AddRange(db.Models.Where(x => x.ParrentId == n.Id));
+            }
+
+            await this.SendCollectionAsList<Model>(user.ChatId, modelsDbSet, client);
+            return await this.SendExplanationStringForDbSet(user.ChatId, client);
         }
 
         public bool Validate(Database.Objects.User user)

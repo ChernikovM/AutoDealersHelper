@@ -85,13 +85,13 @@ namespace AutoDealersHelper.TelegramBot.Commands
 
         };
 
-        public static async Task<Message> SendCollectionAsList<T>(this AbstractCommand command, long chatId, DbSet<T> collection, TelegramBotClient client)
+        public static async Task<Message> SendCollectionAsList<T>(this AbstractCommand command, long chatId, IEnumerable<T> collection, TelegramBotClient client)
             where T : BaseType
         {
             StringBuilder text = new StringBuilder();
 
             int i = 0;
-            text.Append($"{i++}. Все {Environment.NewLine}");
+            text.Append($"{i++}. Любой (Сбросить фильтр). {Environment.NewLine}");
             foreach (var item in collection)
             {
                 text.Append($"{i++}. {item.Name} {Environment.NewLine}");
@@ -105,7 +105,7 @@ namespace AutoDealersHelper.TelegramBot.Commands
             return await Bot.SendTextFormattedBold(chatId, $"⛔️ {text}", client);
         }
 
-        public static async Task<Message> SendExplanationString(this AbstractCommand command, long chatId, TelegramBotClient client)
+        public static async Task<Message> SendExplanationStringForDbSet(this AbstractCommand command, long chatId, TelegramBotClient client)
         {
             StringBuilder text = new StringBuilder();
 
