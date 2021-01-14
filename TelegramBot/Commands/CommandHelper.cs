@@ -19,7 +19,7 @@ namespace AutoDealersHelper.TelegramBot.Commands
 
         S_MAIN_MENU,
         S_CAR_SEARCH_MENU,
-        S_SETTING_FILTER_MENU,
+        S_FILTER_SETTING_MENU,
 
         S_SETTER_FIRST,
         S_SET_BRAND = S_SETTER_FIRST,
@@ -71,15 +71,15 @@ namespace AutoDealersHelper.TelegramBot.Commands
             { CommandNameId.C_BRAND, "🚖 Марка"},
             { CommandNameId.C_MODEL, "🚗 Модель"},
             { CommandNameId.C_PRICE, "💰 Цена"},
-            { CommandNameId.C_YEAR, "📆 Год"},
+            { CommandNameId.C_YEAR, "📆 Год выпуска"},
             { CommandNameId.C_FUEL, "⛽️ Топливо"},
             { CommandNameId.C_GEARBOX, "🎚 Коробка"},
             { CommandNameId.C_STATE, "🇺🇦 Область"},
             { CommandNameId.C_CITY, "🗺 Город"},
             { CommandNameId.C_MILEAGE, "🔢 Пробег"},
-            { CommandNameId.C_VOLUME, " 📶 Объем двигателя"},
+            { CommandNameId.C_VOLUME, "📶 Объем двигателя"},
             { CommandNameId.C_RESET_FILTER, "♻️ Сбросить"},
-            { CommandNameId.C_APPLY_FILTER, "✅ Подтвредить"},
+            { CommandNameId.C_APPLY_FILTER, "✅ Подтвeрдить"},
             { CommandNameId.C_BACK, "🔙 Назад"},
             { CommandNameId.C_EMPTY_BUTTON, "Пустая кнопка"},
 

@@ -1,4 +1,5 @@
 ﻿using AutoDealersHelper.Database;
+using AutoDealersHelper.Exceptions;
 using AutoDealersHelper.Parsers;
 using AutoDealersHelper.TelegramBot.Commands;
 using AutoDealersHelper.TelegramBot.Setters;
@@ -9,8 +10,6 @@ using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Args;
 using Telegram.Bot.Types;
-
-//TODO: при старте бота сохранить в кеш все таблицы из бд для быстрого обращения
 
 namespace AutoDealersHelper.TelegramBot
 {
@@ -45,18 +44,11 @@ namespace AutoDealersHelper.TelegramBot
 
         private ParserAutoRia _autoRiaParser;
 
-        public BotDbContext db { get; } //TODO: remove this field
-
-        public  NLog.Logger logger; //TODO: make private readonly
+        private readonly NLog.Logger logger;
 
         private List<AbstractCommand> _commands;
         private List<ISetter> _setters;
         private readonly MessageHandler _messageHandler;
-        /*
-        public IReadOnlyDictionary<string, ICommand> CommandsDict { get => _commandsDict; }
-
-        private Dictionary<string, ICommand> _commandsDict;
-        */
 
         public TelegramBotClient Client { get; private set; }
 
@@ -78,12 +70,18 @@ namespace AutoDealersHelper.TelegramBot
             _commands.Add(new StartCommand());
             _commands.Add(new MenuCommand());
             _commands.Add(new FilterSettingCommand());
-            _commands.Add(new SetBrandCommand());
-            _commands.Add(new SetModelCommand());
+            _commands.Add(new BrandCommand());
+            _commands.Add(new ModelCommand());
             _commands.Add(new CarSearchMenuCommand());
-            //_commands.Add(new BackToFilterSettingCommand());
-            //_commands.Add(new BackToMainMenuCommand());
-            //_commands.Add(new BackToCarSearchMenuCommand());
+            _commands.Add(new StateCommand());
+            _commands.Add(new CityCommand());
+            _commands.Add(new FuelCommand());
+            _commands.Add(new GearBoxCommand());
+            _commands.Add(new PriceCommand());
+            _commands.Add(new MileageCommand());
+            _commands.Add(new YearCommand());
+            _commands.Add(new VolumeCommand());
+            _commands.Add(new ResetFilterCommand());
             _commands.Add(new NotImplementedCommand());
         }
 
@@ -104,15 +102,12 @@ namespace AutoDealersHelper.TelegramBot
 
                 await _messageHandler.Process(e.Message);
             }
-            catch (ArgumentException ex)
-            {
-                await CommandHelper.SendErrorMessage(null, e.Message.Chat.Id, "Известная ошибка", Client);
-                logger.Error(ex);
-            }
             catch (Exception ex)
             {
-                await CommandHelper.SendErrorMessage(null, e.Message.Chat.Id, "Незвестная ошибка", Client);
-                logger.Fatal(ex);
+                string errorMessage = ExceptionHandler.Execute(ex, logger);
+
+                if(errorMessage != null)
+                    await CommandHelper.SendErrorMessage(null, e.Message.Chat.Id, errorMessage, Client);
             }
         }
 

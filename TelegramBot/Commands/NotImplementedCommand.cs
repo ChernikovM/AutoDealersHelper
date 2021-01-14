@@ -16,7 +16,8 @@ namespace AutoDealersHelper.TelegramBot.Commands
 
         public bool Validate(Database.Objects.User user)
         {
-            throw new ArgumentException();//TODO: NotImplementedCommandException
+            throw new Exception();
+            //throw new ArgumentException();//TODO: NotImplementedCommandException
             //return await this.SendErrorMessage(user.ChatId, "Такой команды не существует или она находится в разработке.\n\nПопробуйте другой пункт меню.", client)            
         }
 

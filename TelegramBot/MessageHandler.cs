@@ -1,5 +1,6 @@
 ﻿using AutoDealersHelper.Database;
 using AutoDealersHelper.Database.Objects;
+using AutoDealersHelper.Exceptions;
 using AutoDealersHelper.TelegramBot.Commands;
 using AutoDealersHelper.TelegramBot.Setters;
 using System;
@@ -43,7 +44,8 @@ namespace AutoDealersHelper.TelegramBot
 
                 if (user == null)
                 {
-                    db.Users.Add(user = new Database.Objects.User(chatId));
+                    user = new Database.Objects.User(chatId);
+                    db.Users.Add(user);
                     await db.SaveChangesAsync();
                 }
             }
@@ -53,8 +55,8 @@ namespace AutoDealersHelper.TelegramBot
 
         public async Task<Message> Process(Message message)
         {
-            if (message.Type != MessageType.Text) //TODO: InvalidMessageTypeException
-                throw new ArgumentException();
+            if (message.Type != MessageType.Text)
+                throw new InvalidMessageTypeException(message.Type);
 
             Database.Objects.User user = GetUserProfile(message.Chat.Id).Result;
 
@@ -78,7 +80,7 @@ namespace AutoDealersHelper.TelegramBot
                 return await _command[message.Text].Run(user, _client);
             }
 
-            ChatStates chatState = user.GetChatStateId();
+            ChatStates chatState = user.ChatState;
 
             if (message.Text == CommandHelper.commandNames[CommandNameId.C_BACK])
                 return await BackButtonRun(user, chatState);
@@ -93,7 +95,7 @@ namespace AutoDealersHelper.TelegramBot
                     return await SetterHandler(user, chatState, message);
                 }
 
-                throw new ArgumentException(); //TODO: UnknownCommandException
+                return null;                
             }
 
             if (IsCommandCanBeExecuted(com, chatState) == false)

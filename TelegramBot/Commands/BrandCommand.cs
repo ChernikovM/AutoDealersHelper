@@ -8,10 +8,10 @@ using Telegram.Bot.Types.ReplyMarkups;
 
 namespace AutoDealersHelper.TelegramBot.Commands
 {
-    class SetBrandCommand : AbstractCommand, ICommandWithKeyboard
+    class BrandCommand : AbstractCommand, ICommandWithKeyboard
     {
         public override string Name => this.CommandName(CommandNameId.C_BRAND);
-        public override ChatStates RequiredStateForRun => ChatStates.S_SETTING_FILTER_MENU;
+        public override ChatStates RequiredStateForRun => ChatStates.S_FILTER_SETTING_MENU;
         public override ChatStates CurrentState => ChatStates.S_SET_BRAND;
         public override AbstractCommand PreviousCommand => new FilterSettingCommand();
 

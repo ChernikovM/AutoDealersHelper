@@ -11,7 +11,10 @@ namespace AutoDealersHelper.Database.Objects
         public int Id { get; set; }
 
         public BaseType()
-        { 
+        {
+            Id = -1;
+            Number = 0;
+            Name = "Любой";
         }
     }
 }

@@ -16,12 +16,12 @@ namespace AutoDealersHelper.TelegramBot.Setters
 
         public void Action(User user, List<int> indexes, BotDbContext db)
         {
-            List<int> brandsNumbers = this.DeserializeFromJsonToList(user.Brand);
+            //List<int> brandsNumbers = this.DeserializeFromJsonToList(user.Brand);
             List<Model> allModels = new List<Model>();
-            foreach (int brandNum in brandsNumbers)
-            {
-                allModels.AddRange(db.Brands.First(brand => brand.Number == brandNum).Models.ToList());
-            }
+            //foreach (int brandNum in brandsNumbers)
+           // {
+            //    allModels.AddRange(db.Brands.First(brand => brand.Number == brandNum).Models.ToList());
+           // }
 
             user = db.Users.First(x => x.ChatId == user.ChatId);
 
@@ -32,16 +32,16 @@ namespace AutoDealersHelper.TelegramBot.Setters
                 userModels.Add(allModels[index].Number);
             }
 
-            user.Model = this.SerializeFromListToJson(userModels);
+            //user.Model = this.SerializeFromListToJson(userModels);
         }
 
         public bool Validate(User user, List<int> list, BotDbContext db)
         {
-            List<int> brands = this.DeserializeFromJsonToList(user.Brand);
+            //List<int> brands = this.DeserializeFromJsonToList(user.Brand);
             int countOfModels = 0;
 
-            foreach (int brandNumber in brands)
-                countOfModels += db.Brands.First(x => x.Number == brandNumber).Models.Count;
+            //foreach (int brandNumber in brands)
+            //    countOfModels += db.Brands.First(x => x.Number == brandNumber).Models.Count;
 
             foreach (int n in list)
             {

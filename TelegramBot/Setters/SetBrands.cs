@@ -24,7 +24,7 @@ namespace AutoDealersHelper.TelegramBot.Setters
                 brandsNumbers.Add( db.Brands.First( x => x.Id == n).Number);
             }
 
-            db.Users.First(x => x.ChatId == user.ChatId).Brand = this.SerializeFromListToJson(brandsNumbers);
+            //db.Users.First(x => x.ChatId == user.ChatId).Brand = this.SerializeFromListToJson(brandsNumbers);
         }
 
         public bool Validate(Database.Objects.User user, List<int> indexes, BotDbContext db)

@@ -18,7 +18,7 @@ namespace AutoDealersHelper.TelegramBot.Commands
 
         public async Task<Message> Run(Database.Objects.User user, TelegramBotClient client)
         {
-            await user.SetChatState(CurrentState);
+            user.ChatState = this.CurrentState;
             return await Action(user, client); //TODO: может лучше не ждать до конца экшона?
         }
 

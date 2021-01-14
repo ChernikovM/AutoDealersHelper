@@ -47,37 +47,5 @@ namespace AutoDealersHelper.TelegramBot.Setters
 
             return true;
         }
-
-        public static List<int> DeserializeFromJsonToList(this ISetter setter, string json)
-        {
-            if (json == null)
-                return null;
-
-            List<int> data;
-            try
-            {
-                data = JsonConvert.DeserializeObject<List<int>>(json);
-            }
-            catch (Exception) //TODO: если ошибка сериализации - вернуть сообщение об ошибке пользователю и обнулить в базе значение
-            {
-                throw; //TODO: отловить ошибку выше
-            }
-
-            return data;
-        }
-
-        public static string SerializeFromListToJson(this ISetter setter,List<int> list)
-        {
-            string data;
-            try
-            {
-                data = JsonConvert.SerializeObject(list);
-            }
-            catch (Exception) //если ошибка сериализации - вернуть сообщ пользователю с просьбой повторить ИЛИ присвоить значение 0
-            {
-                throw; //TODO: отловаить ошибку выше
-            }
-            return data;
-        }
     }
 }

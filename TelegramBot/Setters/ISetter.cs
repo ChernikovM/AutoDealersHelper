@@ -24,6 +24,7 @@ namespace AutoDealersHelper.TelegramBot.Setters
 
             using (BotDbContext db = new BotDbContext())
             {
+
                 if (Validate(user, indexes, db) == false)
                     throw new ArgumentException(); //TODO: InvalidArgumentException
 

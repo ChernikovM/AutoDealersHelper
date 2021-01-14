@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using AutoDealersHelper.Exceptions;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -8,10 +9,10 @@ using Telegram.Bot.Types.ReplyMarkups;
 
 namespace AutoDealersHelper.TelegramBot.Commands
 {
-    class SetModelCommand : AbstractCommand, ICommandWithKeyboard, ICommandValidatable
+    class ModelCommand : AbstractCommand, ICommandWithKeyboard, ICommandValidatable
     {
         public override string Name => this.CommandName(CommandNameId.C_MODEL);
-        public override ChatStates RequiredStateForRun => ChatStates.S_SETTING_FILTER_MENU;
+        public override ChatStates RequiredStateForRun => ChatStates.S_FILTER_SETTING_MENU;
         public override ChatStates CurrentState => ChatStates.S_SET_MODEL;
         public override AbstractCommand PreviousCommand => new FilterSettingCommand();
         public override Dictionary<string, AbstractCommand> AvailableCommands => null;
@@ -27,10 +28,10 @@ namespace AutoDealersHelper.TelegramBot.Commands
 
         public bool Validate(Database.Objects.User user)
         {
-            List<int> brands = JsonConvert.DeserializeObject(user.Brand, typeof(List<int>)) as List<int>;
+            var brands = user.Filter.Brands;
 
-            if (brands.Count == 0 || brands[0] == 0)
-                throw new ArgumentException(); //TODO: BrandException
+            if (brands.Count == 0 || (brands.Count == 1 && brands[0].Number == 0))
+                throw new UndecidedParameterException("Марка");
 
              return true;
         }
