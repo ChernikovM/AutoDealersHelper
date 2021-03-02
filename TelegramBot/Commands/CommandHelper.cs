@@ -1,5 +1,4 @@
 ﻿using AutoDealersHelper.Database.Objects;
-using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -60,8 +59,56 @@ namespace AutoDealersHelper.TelegramBot.Commands
         C_EMPTY_BUTTON,
     }
 
+    public enum ExplanationStringsId
+    { 
+        EX_S_DBSET,
+        EX_S_YEAR,
+        EX_S_MILEAGE,
+        EX_S_VOLUME,
+        EX_S_PRICE,
+    }
+
     public static class CommandHelper
     {
+        #region Explanation strings
+        private static readonly string _explanationStringDbSet = $"Выберите один или несколько вариантов из списка выше и отправьте мне их номера через запятую.\n" +
+                                                  $"\n" +
+                                                  $"Примеры сообщений:\n" +
+                                                  $"\n" +
+                                                  $"10      (если один вариант)\n" +
+                                                  $"9, 56, 84 (если несколько вариантов)\n" +
+                                                  $"0       (значение 'Любой')\n";
+        private static readonly string _explanationStringYear = $"Введите пару годов через запятую для поиска от/до.\n" +
+                                                $"\n" +
+                                                $"Примеры сообщений: \n" +
+                                                $"\n" +
+                                                $"{DateTime.Now.Year - 10}, {DateTime.Now.Year}  (с {DateTime.Now.Year - 10}г. по {DateTime.Now.Year}г.)\n" +
+                                                $"0           (значение 'Любой')\n";
+        private static readonly string _explanationStringMileage = $"Введите пару значений пробега в тыс.км. через запятую для поиска от/до.\n" +
+            $"\n" +
+            $"Примеры сообщений:\n" +
+            $"\n" +
+            $"25, 200   (от 25.000 км. до 200.000 км.)\n" +
+            $"0, 0      (без пробега)\n" +
+            $"0         (значение 'Любой')\n";
+
+        private static readonly string _explanationStringVolume = $"Введите пару значений объема двигателя в литрах через запятую для поиска от/до.\n" +
+            $"\n" +
+            $"Примеры сообщений:\n" +
+            $"\n" +
+            $"1.6, 2.5 (от 1.6 л. до 2.5 л.)\n" +
+            $"2, 5     (от 2 л. до 5 л.)\n" +
+            $"0        (значение 'Любой')\n";
+        private static readonly string _explanationStringPrice = $"Введите пару цен в долларах через запятую для поиска от/до.\n" +
+            $"\n" +
+            $"Примеры сообщений:\n" +
+            $"\n" +
+            $"10000, 15000  (от 10.000$ до 15.000$)\n" +
+            $"0, 1000       (до 1000$)\n" +
+            $"0             (значение 'Любой')\n";
+
+        #endregion
+
         public static IReadOnlyDictionary<CommandNameId, string> commandNames = new Dictionary<CommandNameId, string>()
         {
             { CommandNameId.C_START, "/start"},
@@ -84,8 +131,16 @@ namespace AutoDealersHelper.TelegramBot.Commands
             { CommandNameId.C_EMPTY_BUTTON, "Пустая кнопка"},
 
         };
+        private static readonly IReadOnlyDictionary<ExplanationStringsId, string> explanationString = new Dictionary<ExplanationStringsId, string>
+        {
+            { ExplanationStringsId.EX_S_DBSET, _explanationStringDbSet},
+            { ExplanationStringsId.EX_S_MILEAGE, _explanationStringMileage},
+            { ExplanationStringsId.EX_S_YEAR, _explanationStringYear},
+            { ExplanationStringsId.EX_S_PRICE, _explanationStringPrice},
+            { ExplanationStringsId.EX_S_VOLUME, _explanationStringVolume},
+        };
 
-        public static async Task<Message> SendCollectionAsList<T>(this AbstractCommand command, long chatId, IEnumerable<T> collection, TelegramBotClient client)
+        public static async Task<Message> SendCollection<T>(this AbstractCommand command, long chatId, IEnumerable<T> collection, TelegramBotClient client)
             where T : BaseType
         {
             StringBuilder text = new StringBuilder();
@@ -94,7 +149,7 @@ namespace AutoDealersHelper.TelegramBot.Commands
             text.Append($"{i++}. Любой (Сбросить фильтр). {Environment.NewLine}");
             foreach (var item in collection)
             {
-                text.Append($"{i++}. {item.Name} {Environment.NewLine}");
+                text.Append($"{i++}.{item.Name} {Environment.NewLine}");
             }
 
             return await Bot.SendTextFormattedItalic(chatId, text.ToString(), client);
@@ -105,19 +160,14 @@ namespace AutoDealersHelper.TelegramBot.Commands
             return await Bot.SendTextFormattedBold(chatId, $"⛔️ {text}", client);
         }
 
-        public static async Task<Message> SendExplanationStringForDbSet(this AbstractCommand command, long chatId, TelegramBotClient client)
+        public static async Task<Message> SendExplanationString(this AbstractCommand command, long chatId, TelegramBotClient client)
         {
-            StringBuilder text = new StringBuilder();
+            if (command is IExplanationString != true)
+                return null;
 
-            text.Append("Выберите один или несколько вариантов из списка выше и отправьте мне их номера через запятую, без пробелов.");
-            text.Append(Environment.NewLine);
-            text.Append(Environment.NewLine);
-            text.Append($"Примеры сообщений:{Environment.NewLine}{Environment.NewLine}");
-            text.Append($"10      (если один вариант){Environment.NewLine}");
-            text.Append($"9,56,84 (если несколько вариантов){Environment.NewLine}");
-            text.Append($"0       (чтобы выбрать все варианты){Environment.NewLine}");
+            string text = "📝 " + explanationString[(command as IExplanationString).ExpStringId];
 
-            return await Bot.SendTextFormattedCode(chatId, text.ToString(), client);
+            return await Bot.SendTextFormattedCode(chatId, text, client);
         }
 
     }

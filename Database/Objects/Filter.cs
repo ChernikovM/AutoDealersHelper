@@ -43,10 +43,10 @@ namespace AutoDealersHelper.Database.Objects
             result.Append($"{CommandHelper.commandNames[CommandNameId.C_MODEL]}: \t" + GetCollectionAsString(Models));
             result.Append($"{CommandHelper.commandNames[CommandNameId.C_YEAR]}: \t" + GetValuePairAsString(Year));
             result.Append($"{CommandHelper.commandNames[CommandNameId.C_PRICE]} ($): \t" + GetValuePairAsString(Price));
-            result.Append($"{CommandHelper.commandNames[CommandNameId.C_MILEAGE]} (тыс.км.): \t" + GetValuePairAsString(Mileage));
-            result.Append($"{CommandHelper.commandNames[CommandNameId.C_VOLUME]} (л): \t" + GetValuePairAsString(Volume));
             result.Append($"{CommandHelper.commandNames[CommandNameId.C_STATE]}: \t" + GetCollectionAsString(States));
             result.Append($"{CommandHelper.commandNames[CommandNameId.C_CITY]}: \t" + GetCollectionAsString(Cities));
+            result.Append($"{CommandHelper.commandNames[CommandNameId.C_MILEAGE]} (тыс.км.): \t" + GetValuePairAsString(Mileage));
+            result.Append($"{CommandHelper.commandNames[CommandNameId.C_VOLUME]} (л): \t" + GetValuePairAsString(Volume));
             result.Append($"{CommandHelper.commandNames[CommandNameId.C_GEARBOX]}: \t" + GetCollectionAsString(GearBoxes));
             result.Append($"{CommandHelper.commandNames[CommandNameId.C_FUEL]}: \t" + GetCollectionAsString(Fuels));
 

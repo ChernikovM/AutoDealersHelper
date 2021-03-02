@@ -110,9 +110,7 @@ namespace AutoDealersHelper.TelegramBot
         private async Task<Message> SetterHandler(Database.Objects.User user, ChatStates userChatState, Message message)
         {
             if (_setter.TryGetValue(userChatState, out AbstractSetter setter) == false)
-            {
-                throw new ArgumentException(); //TODO:  UnknownSetterException
-            }
+                return null;
 
             return await setter.Run(user, message.Text, _client);
         }

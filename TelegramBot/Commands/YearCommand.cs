@@ -8,7 +8,7 @@ using Telegram.Bot.Types.ReplyMarkups;
 
 namespace AutoDealersHelper.TelegramBot.Commands
 {
-    public class YearCommand : AbstractCommand, ICommandWithKeyboard
+    public class YearCommand : AbstractCommand, ICommandWithKeyboard, IExplanationString
     {
         public ReplyKeyboardMarkup Keyboard => (this as ICommandWithKeyboard).GetKeyboard(AvailableCommands, PreviousCommand);
 
@@ -21,12 +21,12 @@ namespace AutoDealersHelper.TelegramBot.Commands
         public override ChatStates CurrentState => ChatStates.S_SET_YEAR;
 
         public override Dictionary<string, AbstractCommand> AvailableCommands => null;
-
+        public ExplanationStringsId ExpStringId => ExplanationStringsId.EX_S_YEAR;
         protected async override Task<Message> Action(Database.Objects.User user, TelegramBotClient client)
         {
             await client.SendTextMessageAsync(user.ChatId, Name, replyMarkup: Keyboard);
 
-            return await this.SendExplanationStringForDbSet(user.ChatId, client);
+            return await this.SendExplanationString(user.ChatId, client);
         }
     }
 }

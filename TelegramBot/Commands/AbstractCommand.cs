@@ -11,7 +11,7 @@ namespace AutoDealersHelper.TelegramBot.Commands
         abstract public ChatStates RequiredStateForRun { get; }
         abstract public AbstractCommand PreviousCommand { get; }
         abstract public ChatStates CurrentState { get; }
-        abstract public Dictionary<string, AbstractCommand> AvailableCommands { get; } //TODO: readonly
+        abstract public Dictionary<string, AbstractCommand> AvailableCommands { get; }
 
         abstract protected Task<Message> Action(Database.Objects.User user, TelegramBotClient client);
 

@@ -1,12 +1,11 @@
 ﻿using AutoDealersHelper.Exceptions;
+using AutoDealersHelper.Parsers;
 using AutoDealersHelper.TelegramBot.Commands;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace AutoDealersHelper.Database.Objects
 {
@@ -73,6 +72,39 @@ namespace AutoDealersHelper.Database.Objects
             db.SaveChanges();
 
             return this;
+        }
+
+        public bool CheckAdvertisement(Advertisement ad)
+        {
+            if (this.Filter.Brands.Exists(x => x.Number == ad.Brand || x.Number == 0))
+            {
+                if (this.Filter.Models.Exists(x => x.Number == ad.Model || x.Number == 0))
+                {
+                    if (this.Filter.States.Exists(x => x.Number == ad.StateData.State || x.Number == 0))
+                    {
+                        if (this.Filter.Cities.Exists(x => x.Number == ad.StateData.City || x.Number == 0))
+                        {
+                            if (this.Filter.GearBoxes.Exists(x => x.Number == ad.AutoData.GearBox || x.Number == 0))
+                            {
+                                if (this.Filter.Fuels.Exists(x => x.Number == ad.AutoData.Fuel || x.Number == 0))
+                                {
+                                    if ( (this.Filter.Year.Count > 1 && (ad.AutoData.Year >= this.Filter.Year[0] && ad.AutoData.Year <= this.Filter.Year[1])) || (this.Filter.Year.Count == 1 && this.Filter.Year[0] == 0))
+                                    {
+                                        if ((this.Filter.Mileage.Count > 1 && (ad.AutoData.Mileage >= this.Filter.Mileage[0] && ad.AutoData.Mileage <= this.Filter.Mileage[1])) || (this.Filter.Mileage.Count == 1 &&  this.Filter.Mileage[0] == 0))
+                                        {
+                                            if ((this.Filter.Price.Count > 1 && (ad.Price >= this.Filter.Price[0] && ad.Price <= this.Filter.Price[1])) || (this.Filter.Price.Count == 1 &&  this.Filter.Price[0] == 0))
+                                            {
+                                                return true;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            return false;
         }
     }
 }

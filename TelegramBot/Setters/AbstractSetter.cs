@@ -1,8 +1,10 @@
 ﻿using AutoDealersHelper.Database;
 using AutoDealersHelper.Database.Objects;
+using AutoDealersHelper.Exceptions;
 using AutoDealersHelper.TelegramBot.Commands;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using Telegram.Bot;
@@ -31,40 +33,40 @@ namespace AutoDealersHelper.TelegramBot.Setters
         {
             List<BaseType> collection = new List<BaseType>();
 
+            List<T> dbSetAsList = dbSet.ToList();
+
             foreach (var n in indexes)
             {
-                var item = dbSet.ToList()[n - 1];
-                //var item = dbSet.FirstOrDefault(x => x.Id == n);
-
-                if (item == null)
+                if (n > dbSetAsList.Count || n == 0)
                     continue;
+
+                var item = dbSetAsList[n - 1];
 
                 collection.Add(item);
             }
 
             if (collection.Count == 0)
                 collection.Add(new BaseType());
+
             return collection;
         }
 
-        private List<string> GetSplitTrimDistinctStringsList(string text)
+        private List<string> GetSplitTrimStringsList(string text)
         {
             string[] array = text.Split(',', StringSplitOptions.RemoveEmptyEntries);
 
             for (int i = 0; i < array.Length; ++i)
                 array[i] = array[i].Trim();
 
-            array = array.Distinct().ToArray();
-
             return array.ToList();
         }
 
         protected List<int> GetListIndexesFromString(string text)
         {
-            if (IsValidString<int>(text) == false)
-                throw new ArgumentException(); //TODO: InvalidArgumentException
+            IsValidString<int>(text);
 
-            List<string> list = GetSplitTrimDistinctStringsList(text);
+            List<string> list = GetSplitTrimStringsList(text);
+            list = list.Distinct().ToList();
             List<int> result = new List<int>();
 
             foreach (var digit in list)
@@ -83,48 +85,62 @@ namespace AutoDealersHelper.TelegramBot.Setters
 
         protected List<double> GetDoublePairFromString(string text)
         {
-            if (IsValidString<double>(text) == false)
-                throw new ArgumentException(); //TODO: InvalidArgumentException
+            IsValidString<double>(text);
 
-            List<string> list = GetSplitTrimDistinctStringsList(text);
+            List<string> list = GetSplitTrimStringsList(text);
             List<double> result = new List<double>();
 
             foreach (var digit in list)
             {
-                if (double.TryParse(digit, out double d) == false)
-                    continue;
-                result.Add(d);
+                if (double.TryParse(digit, System.Globalization.NumberStyles.Number, CultureInfo.InvariantCulture, out double d) == true)
+                    result.Add(d);
+                else
+                    throw new InvalidArgumentException(digit);
             }
 
-            result = result.OrderBy(digit => digit).ToList();
-
-            if (result.Count != 2)
-                throw new ArgumentException(); //InvalidArgumentsCountException
-
-            return result;
+            switch (result.Count)
+            {
+                case 1:
+                    if (result[0] == 0)
+                        return result;
+                    result.Add(result[0]);
+                    return result;
+                case 2:
+                    return result;
+                default:
+                    throw new IncorrectArgumentsCountException(2, result.Count);
+            }
         }
 
         protected List<int> GetIntPairFromString(string text)
         {
-            if (IsValidString<int>(text) == false)
-                throw new ArgumentException(); //TODO: InvalidArgumentException
+            IsValidString<int>(text);
 
-            List<string> list = GetSplitTrimDistinctStringsList(text);
+            List<string> list = GetSplitTrimStringsList(text);
             List<int> result = new List<int>();
 
             foreach (var digit in list)
             {
-                if (int.TryParse(digit, out int d) == false)
-                    continue;
-                result.Add(d);
+                if (int.TryParse(digit, out int d) == true)
+                    result.Add(d);
+                else
+                    throw new InvalidArgumentException(digit);
             }
 
             result = result.OrderBy(digit => digit).ToList();
 
-            if (result.Count != 2)
-                throw new ArgumentException(); //InvalidArgumentsCountException
-
-            return result;
+            switch (result.Count)
+            {
+                case 1:
+                    if (result[0] == 0)
+                        return result;
+                    result.Add(result[0]);
+                    return result;
+                case 2:
+                    return result;
+                default:
+                    throw new IncorrectArgumentsCountException(2, result.Count);
+            }
         }
 
         protected bool IsValidString<T>(string text)
@@ -134,8 +150,8 @@ namespace AutoDealersHelper.TelegramBot.Setters
             {
                 if (!char.IsWhiteSpace(n) && !n.Equals(',') && !char.IsDigit(n))
                 {
-                    if(!(n == '.' && typeof(T) == typeof(double)))
-                        return false;
+                    if (!(n == '.' && typeof(T) == typeof(double)))
+                        throw new InvalidCharacterException(n);
                 }
             }
             return true;

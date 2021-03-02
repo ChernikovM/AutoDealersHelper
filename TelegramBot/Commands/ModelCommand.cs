@@ -10,14 +10,14 @@ using Telegram.Bot.Types.ReplyMarkups;
 
 namespace AutoDealersHelper.TelegramBot.Commands
 {
-    class ModelCommand : AbstractCommand, ICommandWithKeyboard, ICommandValidatable
+    class ModelCommand : AbstractCommand, ICommandWithKeyboard, ICommandValidatable, IExplanationString
     {
         public override string Name => this.CommandName(CommandNameId.C_MODEL);
         public override ChatStates RequiredStateForRun => ChatStates.S_FILTER_SETTING_MENU;
         public override ChatStates CurrentState => ChatStates.S_SET_MODEL;
         public override AbstractCommand PreviousCommand => new FilterSettingCommand();
         public override Dictionary<string, AbstractCommand> AvailableCommands => null;
-
+        public ExplanationStringsId ExpStringId => ExplanationStringsId.EX_S_DBSET;
         public ReplyKeyboardMarkup Keyboard => (this as ICommandWithKeyboard).GetKeyboard(AvailableCommands, PreviousCommand);
 
         protected override async Task<Message> Action(Database.Objects.User user, TelegramBotClient client)
@@ -32,8 +32,8 @@ namespace AutoDealersHelper.TelegramBot.Commands
                     modelsDbSet.AddRange(db.Models.Where(x => x.ParrentId == n.Id));
             }
 
-            await this.SendCollectionAsList<Model>(user.ChatId, modelsDbSet, client);
-            return await this.SendExplanationStringForDbSet(user.ChatId, client);
+            await this.SendCollection<Model>(user.ChatId, modelsDbSet, client);
+            return await this.SendExplanationString(user.ChatId, client);
         }
 
         public bool Validate(Database.Objects.User user)

@@ -6,23 +6,28 @@ using Microsoft.EntityFrameworkCore;
 using AutoDealersHelper.Database.Objects;
 using AutoDealersHelper.Database;
 using Newtonsoft.Json;
+using System.Linq;
+
+//TODO: добавить в базу таблицу для хранения последнего прочитанного ИД обьявления. Считать при создании парсера значение LastId и спарсить объявления после него.
+//при выключении сервера обновить в базе значения ластИд.
+//при получении Идов брать в рассчет только те что после ластИд и обрабатывать их.
 
 namespace AutoDealersHelper.Parsers
 {
-    public class ParserAutoRia
+    public class ParserAutoRia : AbstractParser
     {
         #region Singleton
         private static ParserAutoRia _instance;
         private ParserAutoRia() { return; }
-        private ParserAutoRia(string token, NLog.Logger logger)
+        private ParserAutoRia(string token)
         {
             _token = token;
-            _logger = logger;
+            _lastSearchId = 29017097; // get value from db
         }
-        public static ParserAutoRia GetInstance(string apiKey, NLog.Logger logger)
+        public static ParserAutoRia GetInstance(string apiKey)
         {
             if (_instance == null)
-                _instance = new ParserAutoRia(apiKey, logger);
+                _instance = new ParserAutoRia(apiKey);
 
             return _instance;
         }
@@ -30,71 +35,36 @@ namespace AutoDealersHelper.Parsers
         #endregion
 
         private readonly string _token;
-        private NLog.Logger _logger;
-        private string GetJson(string link) //вернет жсон строку с ответом на запрос
-        {
-            string json = null;
-
-            using (WebClient wc = new WebClient())
-            {
-                wc.Encoding = Encoding.UTF8;
-                try
-                {
-                    json = wc.DownloadString(link + "?api_key=" + _token);
-                }
-                catch (Exception ex)
-                {
-                    _logger.Error(ex);
-                }
-            }
-            return json;
-        }
-
+        private int _lastSearchId;
+        #region FillSupportDb
         private IEnumerable<BaseType> Deserialize(string json)
         {
             if (json == null)
                 return null;
 
             IEnumerable<BaseType> data = null;
-            try
-            {
-                data = JsonConvert.DeserializeObject<IEnumerable<BaseType>>(json);
-            }
-            catch (Exception ex)
-            {
-                _logger.Error(ex);
-            }
+            data = JsonConvert.DeserializeObject<IEnumerable<BaseType>>(json);
+
             return data;
         }
 
         public void FillSupportDb(BotDbContext db)
         {
-            try
-            {
-                db.Brands.AddRange(GetCollection<Brand>($"https://developers.ria.com/auto/categories/1/marks/"));
-                db.States.AddRange(GetCollection<State>($"https://developers.ria.com/auto/states"));
+            db.Brands.AddRange(GetCollection<Brand>($"https://developers.ria.com/auto/categories/1/marks/"));
+            db.States.AddRange(GetCollection<State>($"https://developers.ria.com/auto/states"));
 
-                db.SaveChanges();
+            db.SaveChanges();
 
-                db.Fuels.AddRange(GetCollection<Fuel>($"https://developers.ria.com/auto/type/"));
-                db.GearBoxes.AddRange(GetCollection<GearBox>($"https://developers.ria.com/auto/categories/1/gearboxes"));
-                db.Models.AddRange(GetDependantCollection<Model, Brand>($"https://developers.ria.com/auto/categories/1/marks/", db.Brands, "models"));
-                db.Cities.AddRange(GetDependantCollection<City, State>($"https://developers.ria.com/auto/states/", db.States, "cities"));
+            db.Fuels.AddRange(GetCollection<Fuel>($"https://developers.ria.com/auto/type/"));
+            db.GearBoxes.AddRange(GetCollection<GearBox>($"https://developers.ria.com/auto/categories/1/gearboxes"));
+            db.Models.AddRange(GetDependantCollection<Model, Brand>($"https://developers.ria.com/auto/categories/1/marks/", db.Brands, "models"));
+            db.Cities.AddRange(GetDependantCollection<City, State>($"https://developers.ria.com/auto/states/", db.States, "cities"));
 
-                db.SaveChangesAsync();
-            }
-            catch (DbUpdateException ex)
-            {
-                _logger.Fatal(ex);
-            }
-            catch (Exception ex)
-            {
-                _logger.Error(ex);
-            }
+            db.SaveChangesAsync();
         }
 
-        private List<T> GetCollection<T>(string link) 
-            where T: BaseType, new()
+        private List<T> GetCollection<T>(string link)
+            where T : BaseType, new()
         {
             IEnumerable<BaseType> dataCollection = Deserialize(GetJson(link));
             List<T> list = new List<T>();
@@ -104,10 +74,10 @@ namespace AutoDealersHelper.Parsers
             }
             return list;
         }
-        
-        private List<T> GetDependantCollection<T, U>(string link, IEnumerable<U> baseCollection, string tag) 
-            where T: BaseType, IDependentType<U>, new()
-            where U: BaseType
+
+        private List<T> GetDependantCollection<T, U>(string link, IEnumerable<U> baseCollection, string tag)
+            where T : BaseType, IDependentType<U>, new()
+            where U : BaseType
         {
             if (baseCollection == null || baseCollection.GetEnumerator().MoveNext() == false)
                 throw new ArgumentNullException(baseCollection.ToString());
@@ -124,6 +94,79 @@ namespace AutoDealersHelper.Parsers
                 }
             }
             return list;
+        }
+
+#endregion
+
+        private string GetJson(string link, string parameters = "") //вернет жсон строку с ответом на запрос
+        {
+            string json = null;
+
+            using (WebClient wc = new WebClient())
+            {
+                wc.Encoding = Encoding.UTF8;
+                json = wc.DownloadString($"{link}?api_key={_token}&{parameters}");
+            }
+            return json;
+        }
+
+
+        public override List<Advertisement> Parse()
+        {
+            List<int> newIds = GetNewIds();
+            if (newIds == null) // нет новых объявлений
+            {
+                Program.logger.Info($"AutoRia: нет новых объявлений. LastId = [{_lastSearchId}]");
+                return new List<Advertisement>();
+            }
+
+            return GetNewAdvertisements(newIds);
+        }
+
+        private List<int> GetNewIds()
+        {
+            string link = $"https://developers.ria.com/auto/search";
+            string parameters = $"top=1&countpage=100&page=0&order_by=11";
+
+            string json = GetJson(link, parameters);
+            List<int> ids = new List<int>();
+            List<int> result = new List<int>();
+
+            AutoRiaResponse response = JsonConvert.DeserializeObject<AutoRiaResponse>(json);
+
+            if (response.Result.SearchResult.Count == 0)
+            {
+                return null;
+            }
+            ids.AddRange(response.Result.SearchResult.Ids);
+
+            int indexOfLastSearchId = ids.FindIndex(x => x == _lastSearchId);
+
+            result.AddRange(ids.Take(indexOfLastSearchId).ToList());
+            if (result.Count == 0)
+            {
+                return null;
+            }
+
+            _lastSearchId = result[0];
+
+            return result;
+        }
+        private List<Advertisement> GetNewAdvertisements(List<int> ids)
+        {
+            string link = "https://developers.ria.com/auto/info";
+            string parameters;
+            List<Advertisement> result = new List<Advertisement>();
+            string json;
+
+            foreach (var n in ids)
+            {
+                parameters = $"auto_id={n}";
+                json = GetJson(link, parameters);
+                result.Add(JsonConvert.DeserializeObject<Advertisement>(json));
+            }
+
+            return result;
         }
     }
 }

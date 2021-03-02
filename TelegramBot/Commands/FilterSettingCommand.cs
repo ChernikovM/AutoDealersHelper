@@ -18,16 +18,17 @@ namespace AutoDealersHelper.TelegramBot.Commands
         {
             { CommandName(CommandNameId.C_BRAND), new BrandCommand() },
             { CommandName(CommandNameId.C_MODEL), new ModelCommand() },
-            { CommandName(CommandNameId.C_PRICE), new PriceCommand() },
             { CommandName(CommandNameId.C_YEAR), new YearCommand() },
-            { CommandName(CommandNameId.C_GEARBOX), new GearBoxCommand() },
-            { CommandName(CommandNameId.C_FUEL), new FuelCommand() },
-            { CommandName(CommandNameId.C_MILEAGE), new MileageCommand() },
-            { CommandName(CommandNameId.C_VOLUME), new VolumeCommand() },
+            { CommandName(CommandNameId.C_PRICE), new PriceCommand() },
             { CommandName(CommandNameId.C_STATE), new StateCommand() },
             { CommandName(CommandNameId.C_CITY), new CityCommand() },
+            { CommandName(CommandNameId.C_MILEAGE), new MileageCommand() },
+            { CommandName(CommandNameId.C_VOLUME), new VolumeCommand() },
+            { CommandName(CommandNameId.C_GEARBOX), new GearBoxCommand() },
+            { CommandName(CommandNameId.C_FUEL), new FuelCommand() },
+            
             { CommandName(CommandNameId.C_RESET_FILTER), new ResetFilterCommand() },
-            { CommandName(CommandNameId.C_APPLY_FILTER), new NotImplementedCommand() }, //TODO: доделать кнопку
+            { CommandName(CommandNameId.C_APPLY_FILTER), new NotImplementedCommand() }, //TODO: доделать кнопку apply
         };
 
         public ReplyKeyboardMarkup Keyboard => (this as ICommandWithKeyboard).GetKeyboard(AvailableCommands, PreviousCommand);

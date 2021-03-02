@@ -1,11 +1,8 @@
-﻿using AutoDealersHelper.Database;
-using AutoDealersHelper.Exceptions;
-using AutoDealersHelper.Parsers;
+﻿using AutoDealersHelper.Exceptions;
 using AutoDealersHelper.TelegramBot.Commands;
 using AutoDealersHelper.TelegramBot.Setters;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Args;
@@ -18,11 +15,10 @@ namespace AutoDealersHelper.TelegramBot
         #region Singleton
 
         private static Bot _bot;
-        private Bot(Config config, NLog.Logger logger)
+        private Bot(NLog.Logger logger)
         {
-            Client = new TelegramBotClient(config.TelegramToken);
+            Client = new TelegramBotClient(Program.Config.TelegramToken);
             this.logger = logger;
-            _autoRiaParser = ParserAutoRia.GetInstance(config.AutoRiaToken, logger);            
 
             Client.OnMessage += ClientOnMessageReceived;
             
@@ -31,16 +27,14 @@ namespace AutoDealersHelper.TelegramBot
             _messageHandler = new MessageHandler(_commands, _setters, Client);
         }
 
-        public static Bot GetInstance(Config config, NLog.Logger logger)
+        public static Bot GetInstance(NLog.Logger logger)
         {
             if (_bot == null)
-                _bot = new Bot(config, logger);
+                _bot = new Bot(logger);
 
             return _bot;
         }
         #endregion
-
-        private readonly ParserAutoRia _autoRiaParser;
 
         private readonly NLog.Logger logger;
 
@@ -91,6 +85,13 @@ namespace AutoDealersHelper.TelegramBot
                 new BrandsSetter(),
                 new MileageSetter(),
                 new ModelsSetter(),
+                new YearSetter(),
+                new PriceSetter(),
+                new VolumeSetter(),
+                new StatesSetter(),
+                new CitiesSetter(),
+                new GearBoxesSetter(),
+                new FuelsSetter(),
             };
 
         }
@@ -113,6 +114,11 @@ namespace AutoDealersHelper.TelegramBot
         }
 
         #region FormattedSenders
+
+        public async void SendAsvertisement(long chatId, string link)
+        {
+            await Client.SendTextMessageAsync(chatId, link);
+        }
 
         public static async Task<Message> SendTextFormattedCode(long chatId, string text, TelegramBotClient client)
         {

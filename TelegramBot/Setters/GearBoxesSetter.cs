@@ -1,26 +1,27 @@
 ﻿using AutoDealersHelper.Database;
 using AutoDealersHelper.Database.Objects;
 using AutoDealersHelper.TelegramBot.Commands;
+using System;
 using System.Collections.Generic;
-
-//TODO: при вводе пары 0, 0 - искать авто без пробега
+using System.Text;
 
 namespace AutoDealersHelper.TelegramBot.Setters
 {
-    public class MileageSetter : AbstractSetter
+    public class GearBoxesSetter : AbstractSetter
     {
-        public override ChatStates RequiredStateForRun => ChatStates.S_SET_MILEAGE;
+        public override ChatStates RequiredStateForRun => ChatStates.S_SET_GEARBOX;
 
         public override AbstractCommand NextCommand => new FilterSettingCommand();
 
         public override void Action(User user, string text, BotDbContext db)
         {
-            List<int> pair = GetIntPairFromString(text);
+            List<int> indexes = GetListIndexesFromString(text);
+
+            List<BaseType> gearboxes = GetCollectionOfItemByIndexes(indexes, db.GearBoxes);
 
             Filter filter = user.Filter;
-            filter.Mileage = pair;
+            filter.GearBoxes = gearboxes;
             user.Filter = filter;
         }
-
     }
 }

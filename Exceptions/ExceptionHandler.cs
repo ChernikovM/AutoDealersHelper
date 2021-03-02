@@ -44,8 +44,6 @@ namespace AutoDealersHelper.Exceptions
 
                 return currentEx.ErrorMessage;
             }
-            else if (ex is ArgumentException) //TODO: Убрать ексепшн
-                errorMessage = "Известная ошибка";
             else
                 logger.Error(ex); //TODO: неизвестная ошибка - кинуть в логи ERROR, время, юзера десериализованного, команду им отправленную
 

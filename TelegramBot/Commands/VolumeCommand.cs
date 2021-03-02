@@ -8,7 +8,7 @@ using Telegram.Bot.Types.ReplyMarkups;
 
 namespace AutoDealersHelper.TelegramBot.Commands
 {
-    public class VolumeCommand : AbstractCommand, ICommandWithKeyboard
+    public class VolumeCommand : AbstractCommand, ICommandWithKeyboard, IExplanationString
     {
         public override string Name => CommandName(CommandNameId.C_VOLUME);
 
@@ -19,14 +19,14 @@ namespace AutoDealersHelper.TelegramBot.Commands
         public override ChatStates CurrentState => ChatStates.S_SET_VOLUME;
 
         public override Dictionary<string, AbstractCommand> AvailableCommands => null;
-
+        public ExplanationStringsId ExpStringId => ExplanationStringsId.EX_S_VOLUME;
         public ReplyKeyboardMarkup Keyboard => (this as ICommandWithKeyboard).GetKeyboard(AvailableCommands, PreviousCommand);
 
         protected async override Task<Telegram.Bot.Types.Message> Action(User user, TelegramBotClient client)
         {
             await client.SendTextMessageAsync(user.ChatId, Name, replyMarkup: Keyboard);
 
-            return await this.SendExplanationStringForDbSet(user.ChatId, client);
+            return await this.SendExplanationString(user.ChatId, client);
         }
     }
 }
